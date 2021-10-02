@@ -12,12 +12,13 @@ epsilon2 = 10**-3
 epsilon3 = 10**-3
 M=100                        # Max iterations in conjugate gradient method
 deltaX = 10**-5
-gradient =0
+index = 0
+grad = 0.0
 noOfVariables = 2
 delta = None
 noOf_functionEval = None
 intermediatepoints =100
-queueSize = 500
+queueSize = 5
 myQ_1 = None  # Queue
 xi = np.zeros(noOfVariables)
 si = np.zeros(noOfVariables)
@@ -59,6 +60,21 @@ class CustomQueue:
         else:
             pass
 
+class CustomList:
+    global queueSize
+
+    def __init__(self) -> None:
+        self.index =[]
+        self.x_values = []
+        self.function_values = []
+
+    def push_x_and_f_value(self, x, f):
+        global index
+        # x is the point and f=function(x)
+        self.index.append(index)
+        self.x_values.append(x)
+        self.function_values.append(f)
+        index = index + 1
 
 # Initiate the Optimization Method Here
 def start():
@@ -74,73 +90,55 @@ def start():
     objectiveFunctionIndicator = float(input("Input the serial number of desired objective function\t->\t"))
     # lowerLimit = float(input("Please enter the lower limit\t->\t"))
     # upperLimit = float(input("Please enter the upper limit\t->\t"))
-    lowerLimit = -10
-    upperLimit = 10
+    lowerLimit = -10.0
+    upperLimit = 10.0
     
     
     # intermediatepoints = float(input("Please enter the number of intermediate points\t->\t"))
     print(conjugateGradientMethod(lowerLimit, upperLimit))
-    
-
-    # delta = (upperLimit-lowerLimit)/intermediatepoints
-
-    # [a, b] = boundingPhaseMethod(lowerLimit, upperLimit)
 
     # print(f"Bounding Phase Method -> {a} to {b}")
     # print(
     #     f"No of function evaluations at the end of Bracketing Method = {noOf_functionEval}")
 
-    # plt.figure(1)
-    # plt.title("Bounding Phase Method")
-    # plt.xlabel("Iteration count")
-    # plt.ylabel("F(x) in Various Iterations")
-    # plt.plot(range(1,len(x_series)+1), f_x_series, "r*-")
-
-    # re-initialise the queue
-    # myQ_1 = CustomQueue()
-
-    # out.write("\n\n")
-
-    # call the region elimination method
-    # [a, b] = intervalHalving(a, b)
-
     # print(f"Interval Halving Method -> {a} to {b}")
     # print(f"Total no of function evaluations = {noOf_functionEval}")
 
-    # plt.figure(2)
-    # plt.title("Interval Halving Method")
-    # plt.xlabel("Iteration count")
-    # plt.ylabel("F(x) in Various iterations")
-    # plt.plot(range(1,len(x_1_series)+1), f_x_1_series, "k^-")
-    # plt.plot(range(1,len(x_m_series)+1), f_x_m_series, "b+-")
-    # plt.plot(range(1,len(x_2_series)+1), f_x_2_series, "yo-")
-    # plt.legend(["f(x_1)", "f(x_m)", "f(x_2)"])
-
-    # plt.show()
-
 def gradientV(x):                              # A seperate function for gradient calculation of a function, input is a vector, output is a vector
+    global grad, deltaX
     gradF = np.zeros(noOfVariables)
-    gradient =1.0
-    gradF = (objectiveFunction(x+deltaX) -objectiveFunction(x-deltaX))/2*deltaX
-    gradient = 0.0
+    gradF =x
+    # print(grad)
+    grad = 1
+    # print(0)
+    # print(x)
+    # print(x+deltaX)
+    # gradF = (objectiveFunction(x+deltaX) -objectiveFunction(x-deltaX))/2*deltaX
+    grad = 0.0
+    # print(gradF)
+    # print(1123)
     return  gradF           
 
 def magnitudeOfVector(x):                   # Function to calculate magnitude of a vector
     value = 0
     for i in range(noOfVariables):
-        value = value + x[i]**2
+        value = value + x[0,i]**2
     value = value**0.5
     return value
 
 def conjugateGradientMethod(a, b):
+    global xi, si, index
     k=0
     xStart = (b-a)*np.random.rand(1, noOfVariables) +a*np.ones(noOfVariables)           # A random vector x to start with between a and b limits, b is upperLimit an a is lowerLimit
     
     gradF = gradientV(xStart)
+    # print(0000000)
+    # list = np.empty([2, M])                                       # Storing x vector in 0th row and its gradient vector in 1st row
+    # list[0,k] = xStart
+    # list[1,k] = gradF
 
-    list = np.empty([2, M])                                       # Storing x vector in 0th row and its gradient vector in 1st row
-    list[0,k] = xStart
-    list[1,k] = gradF
+    list = CustomList()
+    list.push_x_and_f_value(xStart, gradF)
 
     xi = xStart
     si = -gradF
@@ -150,16 +148,21 @@ def conjugateGradientMethod(a, b):
     k=1
     gradF = gradientV(xStart)
 
-    list[0,k] = xStart
-    list[1,k] = gradF
-
+    # list[0,k] = xStart
+    # list[1,k] = gradF
+    list.push_x_and_f_value(xStart, gradF)
+    # print(index)
+    # print(11111111111111111111)
     while True:
-        sk = -gradF + (magnitudeOfVector(gradF)**2/magnitudeOfVector(list[1,k-1])**2)*si
+        if(k-1 in list.index):
+            ind = list.index.index(k-1)
+            val = list.function_values[ind]
+        sk = -gradF + (magnitudeOfVector(gradF)**2/magnitudeOfVector(val)**2)*si
 
         #Linear independence check
         cosine = (si*sk)/(magnitudeOfVector(si)*magnitudeOfVector(sk))
-        if(cosine>=0.99):
-            pass
+        # if(cosine>=0.99):
+        #     pass
 
 
         xi = xStart
@@ -170,8 +173,9 @@ def conjugateGradientMethod(a, b):
         xStart = xi + lmbda*si
         gradF = gradientV(xStart)
 
-        list[0,k] = xStart
-        list[1,k] = gradF
+        # list[0,k] = xStart
+        # list[1,k] = gradF
+        list.push_x_and_f_value(xStart, gradF)
 
         if(magnitudeOfVector(xStart-xi)/magnitudeOfVector(xi)<=epsilon2):
             break
@@ -185,6 +189,7 @@ def conjugateGradientMethod(a, b):
 
 
 def unidirectionalSearch(a,b): # Returns a number that matches optimum point upto decimal places defines by "uptoDecimalPlaces"
+    global delta
     myQ_1 = CustomQueue()
     delta = (b-a)/intermediatepoints                  #a= lowerlimit, b = upperlimit
     [a, b] = boundingPhaseMethod(a, b)
@@ -320,10 +325,11 @@ def intervalHalving(a, b):
 # Objective functions' definition
 def objectiveFunction(x):   # x is a scalar
     # check whther the x is already stored in the queue
-    global noOf_functionEval
-    print(1)
-    if(gradient == 1.0):
-        print(2)
+    global noOf_functionEval, grad, xi, si
+    # print(11111)
+    # print(x)
+    if(grad == 1.0):
+        # print(22222)
         return objectiveFunctionPhase2(x)
 
     if (x in myQ_1.x_values):
@@ -344,21 +350,9 @@ def objectiveFunction(x):   # x is a scalar
             myQ_1.function_values.append(value)
 
         return value
-    # else:
-    #     noOf_functionEval += 1
-    #     if (objectiveFunctionIndicator == 1):
-    #         value = (x**2-1)**3-(2*x-5)**4
-    #     elif(objectiveFunctionIndicator == 2):
-    #         value = -(8 + x**3 - 2*x - 2*math.exp(x))
-    #     elif(objectiveFunctionIndicator == 3):
-    #         value = -(4*x*math.sin(x))
-    #     elif(objectiveFunctionIndicator == 4):
-    #         value = 2*(x-3)**2 + math.exp(0.5*x**2)
-    #     elif(objectiveFunctionIndicator == 5):
-    #         value = x**2 - 10*math.exp(0.1*x)
-    #     elif(objectiveFunctionIndicator == 6):
-    #         value = -(20*math.sin(x) - 15*x**2)
-
+    # print(131231123)
+    # print(xi)
+    # print(si)
     value = objectiveFunctionPhase2(xi+x*si)
 
     myQ_1.push_x_and_f_value(x, value)
@@ -366,12 +360,14 @@ def objectiveFunction(x):   # x is a scalar
 
 def objectiveFunctionPhase2(x): # input is a vector, output is a scalar value
     f = 0
-    if(objectiveFunctionIndicator ==1):
+    # print(123)
+    # print(x)
+    if(objectiveFunctionIndicator == 1):
         for i in range(noOfVariables):
-            f = f + (i+1)*x[i]**2
-    elif(objectiveFunctionIndicator ==2):
+            f = f + (i+1)*x[0,i]**2
+    elif(objectiveFunctionIndicator == 2):
         for i in range(noOfVariables-1):
-            f = f + 100*(x[i+1]-x[i]**2)**2 + (x[i]-1)**2        
+            f = f + 100*(x[0,i+1]-x[0,i]**2)**2 + (x[0,i]-1)**2        
 
     return f
 
