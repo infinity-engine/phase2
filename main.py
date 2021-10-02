@@ -118,11 +118,11 @@ def start():
 
     # plt.show()
 
-def gradient(x):                              # A seperate function for gradient calculation of a function, input is a vector, output is a vector
+def gradientV(x):                              # A seperate function for gradient calculation of a function, input is a vector, output is a vector
     gradF = np.zeros(noOfVariables)
-    gradient =1
+    gradient =1.0
     gradF = (objectiveFunction(x+deltaX) -objectiveFunction(x-deltaX))/2*deltaX
-    gradient = 0
+    gradient = 0.0
     return  gradF           
 
 def magnitudeOfVector(x):                   # Function to calculate magnitude of a vector
@@ -136,7 +136,7 @@ def conjugateGradientMethod(a, b):
     k=0
     xStart = (b-a)*np.random.rand(1, noOfVariables) +a*np.ones(noOfVariables)           # A random vector x to start with between a and b limits, b is upperLimit an a is lowerLimit
     
-    gradF = gradient(xStart)
+    gradF = gradientV(xStart)
 
     list = np.empty([2, M])                                       # Storing x vector in 0th row and its gradient vector in 1st row
     list[0,k] = xStart
@@ -148,7 +148,7 @@ def conjugateGradientMethod(a, b):
     lmbda = unidirectionalSearch(a, b)                                                 # lmbda = lambda, output of unidirectional method will be lambda
     xStart = xi + lmbda*si
     k=1
-    gradF = gradient(xStart)
+    gradF = gradientV(xStart)
 
     list[0,k] = xStart
     list[1,k] = gradF
@@ -168,7 +168,7 @@ def conjugateGradientMethod(a, b):
         lmbda = unidirectionalSearch(a,b)
 
         xStart = xi + lmbda*si
-        gradF = gradient(xStart)
+        gradF = gradientV(xStart)
 
         list[0,k] = xStart
         list[1,k] = gradF
@@ -321,8 +321,9 @@ def intervalHalving(a, b):
 def objectiveFunction(x):   # x is a scalar
     # check whther the x is already stored in the queue
     global noOf_functionEval
-
+    print(1)
     if(gradient == 1.0):
+        print(2)
         return objectiveFunctionPhase2(x)
 
     if (x in myQ_1.x_values):
