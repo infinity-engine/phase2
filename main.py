@@ -5,6 +5,7 @@ import random
 objectiveFunctionIndicator = 1  # default value
 dictForObjectiveFunction = {}
 noOfFunctionEvaluations = 0
+angleForDependencyInDegree = 5  # For Linear Dependancy Check
 
 
 def objectiveFunction(*args):
@@ -20,31 +21,54 @@ def objectiveFunction(*args):
         return dictForObjectiveFunction.get(args)
 
     # when values are not stored calculate fresh.
+    result = 0
+    # Sum Squares Function
     if objectiveFunctionIndicator == 1:
         sum = 0
         for i in range(len(args)):
             sum = sum + (i+1)*(args[i])**2
+        result = sum
 
-        # store the new calculated value in the dictionary
-        dictForObjectiveFunction[args] = sum
-
-        noOfFunctionEvaluations += 1
-        return sum
-
+    # Rosenbrock Function
     elif objectiveFunctionIndicator == 2:
-        pass
+        sum = 0
+        for i in range(len(args)-1):
+            sum = sum + (100*(args[i+1]-args[i]**2)**2+(args[i]-1)**2)
+        result = sum
 
+    # Dixon-Price Function
     elif objectiveFunctionIndicator == 3:
-        pass
+        term_1 = (args[0]-1)**2
+        sum = 0
+        for i in range(len(args)-1):
+            sum = sum + (i+2)*(2*args[i+1]**2-args[i])**2
+        result = term_1+sum
 
+    # Trid Function
     elif objectiveFunctionIndicator == 4:
-        pass
+        sum_1 = sum_2 = 0
+        for i in range(len(args)):
+            sum_1 = sum_1 + (args[i]-1)**2
+        for i in range(len(args)-1):
+            sum_2 = sum_2 + args[i+1]*args[i]
+        result = sum_1-sum_2
 
+    # Zakharov Function
     elif objectiveFunctionIndicator == 5:
-        pass
+        sum_1 = sum_2 = sum_3 = 0
+        for i in range(len(args)):
+            sum_1 = sum_1 + args[i]**2
+            sum_2 = sum_2 + 0.5*(i+1)*args[i]
+        sum_3 = sum_2
+        result = sum_1 + sum_2**2 + sum_3**4
 
     else:
         return None
+
+    # store the new calculated value in the dictionary
+    dictForObjectiveFunction[args] = result
+    noOfFunctionEvaluations += 1
+    return result
 
 
 def partialDerivative(functionToOperate, variableIndicator, currentPoint):
@@ -78,7 +102,7 @@ def gradiantOfFunction(functionToOperate, currentPoint):
         currentPoint (list): current point at which gradiant to be calculated.
 
     Returns:
-        nummpy array: gradiant vector
+        numpy array: gradiant vector
     """
 
     # Create a Zero matrix with no. of rows = no of variable in currentpoint
@@ -91,6 +115,19 @@ def gradiantOfFunction(functionToOperate, currentPoint):
 
 
 def boundingPhaseMethod(functionToOperate, delta, a, b):
+    """This is a Bracketing method. 
+    Which will be used to optimize a single variable function.
+
+    Args:
+        functionToOperate (call back function): Objective Function
+        delta (float): Separation between two points
+        a (float): Lower limit
+        b (float): Upper limit
+
+    Returns:
+        [a,b]: List containing the brackets [Lower,Upper].
+    """
+
     deltaWithSign = None
     k = 0
     while True:
@@ -131,6 +168,18 @@ def boundingPhaseMethod(functionToOperate, delta, a, b):
 
 
 def intervalHalving(functionToOperate, epsinol, a, b):
+    """This is a Region Elimination method.
+    Which will be used to find the optimal solution for a single variable function.
+
+    Args:
+        functionToOperate (call back function): Objective Function
+        epsinol (float): Very small value used to terminate the iteration
+        a (float): Lower limit
+        b (float): Upper limit
+
+    Returns:
+        List: A list contains the bracket [lower,upper]
+    """
 
     # step 1
     x_m = (a+b)/2
@@ -168,14 +217,33 @@ def intervalHalving(functionToOperate, epsinol, a, b):
 
 
 def changeToUniDirectionFunction(functionToOperate, x, s):
+    """This is a function which will be used to scale the multivariable function
+    into a single variable function using uni direction method.
+
+    Args:
+        functionToOperate (call back function): Multivariable objective function
+        x (row vector): Position of initial point in [1,2,...] format
+        s (row vector): Direction vector in [1,2,....] format
+
+    Returns:
+        function: Scaled functiion in terms of single variable -> a
+    """
     return lambda a: functionToOperate(*(np.array(x)+np.multiply(s, a)))
 
 
 def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
+    """This is an Gradiant Based Multi-Variable Optimisation Method.
+    It is used to find the optimal solution of an objective function.
+
+    Args:
+        functionToOperate (call back function): Objective Function
+        limits (list): in [lower,upper] format
+        initialPoint (list): in [x0,x1,x2....] format
+    """
     # step 1
     a, b = limits
     x_0 = list(initialPoint)
-    epsinolOne = epsinolTwo = epsinolThree = 10**-3
+    epsinolOne = epsinolThree = 10**-3
     k = 0
     M = 10
     x_series = []
@@ -216,7 +284,20 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
         s = part_1_s + part_2_s
         s_series.append(s)
 
-        # write the code to check linear independance
+        # code to check linear independance
+        s_k = s_series[-1][:, 0]  # row vector
+        s_k_1 = s_series[-2][:, 0]  # row vector
+        dotProduct = s_k @ s_k_1
+        factor = np.linalg.norm(s_k)*np.linalg.norm(s_k_1)
+        finalDotProduct = dotProduct/factor
+        dependencyCheck = math.acos(
+            finalDotProduct)*(180/math.pi)  # in degrees
+        # print(dependencyCheck)
+        if abs(dependencyCheck) < angleForDependencyInDegree:
+            # Restart
+            print("Linear Dependency Found! Restarting")
+            conjugateGradiantMethod(functionToOperate, limits, x_series[-1])
+            break
 
         # step 5
         # convert multivariable function into single variable function
@@ -253,4 +334,21 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
         break
 
 
-print(conjugateGradiantMethod(objectiveFunction, [-10, 10], [-5, 5, 9]))
+def start():
+    """Function to initialise the program
+    """
+    global objectiveFunctionIndicator
+    objectiveFunctionIndicator = int(input("Enter function indicator : \t"))
+    a = int(input("Enter the lower limit : \t"))
+    b = int(input("Enter the upper limit : \t"))
+    optimumPoint = conjugateGradiantMethod(
+        objectiveFunction, [a, b], [1, 1, 1, 1])
+    print(
+        f"\nTotal no of function evaluations are \n{noOfFunctionEvaluations}\n")
+    print(
+        f"\nOptimal solutions for the current objective function and for the given range is \n{optimumPoint}\n")
+    print(
+        f"\nOptimal value of the function is \n{objectiveFunction(*optimumPoint)}\n")
+
+
+start()
