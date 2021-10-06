@@ -5,7 +5,7 @@ import random
 objectiveFunctionIndicator = 1  # default value
 dictForObjectiveFunction = {}
 noOfFunctionEvaluations = 0
-angleForDependencyInDegree = 5  # For Linear Dependancy Check
+angleForDependencyInDegree = 1  # For Linear Dependancy Check
 
 
 def objectiveFunction(*args):
@@ -40,8 +40,9 @@ def objectiveFunction(*args):
     elif objectiveFunctionIndicator == 3:
         term_1 = (args[0]-1)**2
         sum = 0
-        for i in range(len(args)-1):
-            sum = sum + (i+2)*(2*args[i+1]**2-args[i])**2
+        if len(args) > 1:
+            for i in range(len(args)-1):
+                sum = sum + (i+2)*(2*args[i+1]**2-args[i])**2
         result = term_1+sum
 
     # Trid Function
@@ -79,7 +80,7 @@ def partialDerivative(functionToOperate, variableIndicator, currentPoint):
 
     Args:
         functionToOperate (call back function): [function on which we will be differentiating]
-        variableIndicator (int): [its an indicator for variable with respect to which we will be partially differentiating]
+        variableIndicator (int): [its an indicator for variable, starts from 1, with respect to which we will be partially differentiating]
         currentPoint (list): [current point at which we need to make the differentiation]
 
     Returns:
@@ -243,14 +244,15 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
     # step 1
     a, b = limits
     x_0 = list(initialPoint)
-    epsinolOne = epsinolThree = 10**-3
+    epsinolOne = 10**-3
+    epsinolThree = 10**-3
     k = 0
     M = 10
-    x_series = []
+    x_series = []  # store the x vextors
     x_series.append(x_0)
 
     # step2
-    s_series = []  # store the direction vector
+    s_series = []  # store the direction vectors
     s_series.append(-gradiantOfFunction(functionToOperate, x_0))
 
     # step3
@@ -263,24 +265,24 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
     m, n = boundingPhaseMethod(newObjectiveFunction, 10**-1, a, b)
     m, n = intervalHalving(newObjectiveFunction, epsinolOne, m, n)
     optimumPoint = (m+n)/2
-    #print("Optimum Point",optimumPoint)
+    # print("Optimum Point",optimumPoint)
 
-    x = (np.array(x_0)+np.multiply(s_0, optimumPoint))
-    # print(x)
-    x_series.append(x)
+    x_1 = (np.array(x_0)+np.multiply(s_0, optimumPoint))
+    # print(x_1)
+    x_series.append(x_1)
     k = 1
 
     while(True):
 
         # step 4
-        part_1_s = -gradiantOfFunction(objectiveFunction, x_series[k])
+        part_1_s = -gradiantOfFunction(objectiveFunction, x_series[-1])
         p = (np.linalg.norm(-part_1_s))**2
-        q = gradiantOfFunction(objectiveFunction, x_series[k-1])
+        q = gradiantOfFunction(objectiveFunction, x_series[-2])
         r = (np.linalg.norm(q))**2
         t = 0
         if p != 0 and r != 0:
             t = p/r
-        part_2_s = np.multiply(s_series[k-1], t)
+        part_2_s = np.multiply(s_series[-1], t)
         s = part_1_s + part_2_s
         s_series.append(s)
 
@@ -290,19 +292,19 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
         dotProduct = s_k @ s_k_1
         factor = np.linalg.norm(s_k)*np.linalg.norm(s_k_1)
         finalDotProduct = dotProduct/factor
+        finalDotProduct = round(finalDotProduct, 3)
         dependencyCheck = math.acos(
             finalDotProduct)*(180/math.pi)  # in degrees
         # print(dependencyCheck)
         if abs(dependencyCheck) < angleForDependencyInDegree:
             # Restart
             print("Linear Dependency Found! Restarting")
-            conjugateGradiantMethod(functionToOperate, limits, x_series[-1])
-            break
+            return conjugateGradiantMethod(functionToOperate, limits, x_series[-1])
 
         # step 5
         # convert multivariable function into single variable function
-        x_k = x_series[k]  # 1-D list
-        s_k = s_series[k][:, 0]  # 1-D list
+        x_k = x_series[-1]  # 1-D list
+        s_k = s_series[-1][:, 0]  # 1-D list
         newObjectiveFunction = changeToUniDirectionFunction(
             functionToOperate, x_k, s_k)
 
@@ -310,13 +312,13 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
         m, n = boundingPhaseMethod(newObjectiveFunction, 10**-1, a, b)
         m, n = intervalHalving(newObjectiveFunction, epsinolOne, m, n)
         optimumPoint = (m+n)/2
-        x = (np.array(x_k)+np.multiply(s_k, optimumPoint))
-        x_series.append(x)
+        x_new = (np.array(x_k)+np.multiply(s_k, optimumPoint))
+        x_series.append(x_new)
 
         # step 6
         # check the terminate condition
-        norm_1 = np.linalg.norm(np.array(x_series[k+1])-np.array(x_series[k]))
-        norm_2 = np.linalg.norm(x_series[k])
+        norm_1 = np.linalg.norm(np.array(x_series[-1])-np.array(x_series[-2]))
+        norm_2 = np.linalg.norm(x_series[-2])
         factor_1 = 0
         factor_2 = np.linalg.norm(gradiantOfFunction(
             functionToOperate, x_series[k+1]))
@@ -326,7 +328,7 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
 
         if factor_1 <= epsinolThree or factor_2 <= epsinolThree or k+1 >= M:
             # terminate the function
-            return(x_series[k+1])
+            return(x_series[-1])
         else:
             k += 1
             continue
@@ -351,4 +353,10 @@ def start():
         f"\nOptimal value of the function is \n{objectiveFunction(*optimumPoint)}\n")
 
 
+""" 
+# For Consitency Check
+objectiveFunctionIndicator = 2
+for i in range(10):
+    print(conjugateGradiantMethod(objectiveFunction,[-10,10],[1,1,1,1])) """
+    
 start()
