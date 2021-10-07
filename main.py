@@ -341,7 +341,7 @@ def start():
     noOfVariables = int(input("Enter the number of variables : \t"))
     initialChoice = []
     for i in range(noOfVariables):
-        initialChoice.append((a+b)*random.random()+a)
+        initialChoice.append((b-a)*random.random()+a)
     optimumPoint = conjugateGradiantMethod(
         objectiveFunction, [a, b], initialChoice)
     print(
