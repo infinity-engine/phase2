@@ -244,16 +244,21 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
     # step 1
     a, b = limits
     x_0 = list(initialPoint)
-    epsinolOne = 10**-3
-    epsinolThree = 10**-3
+    epsinolOne = 10**-8
+    epsinolThree = 10**-8
     k = 0
-    M = 10
+    M = 100
     x_series = []  # store the x vextors
     x_series.append(x_0)
 
     # step2
     s_series = []  # store the direction vectors
-    s_series.append(-gradiantOfFunction(functionToOperate, x_0))
+    gradiantAtX_0 = gradiantOfFunction(functionToOperate, x_0)
+    s_series.append(-gradiantAtX_0)
+    # Extra termination condition *****
+    if (np.linalg.norm(gradiantAtX_0)) <= epsinolThree:
+        print(f"CG: Termination Point 1. Iterations Count - {k}")
+        return (x_0)
 
     # step3
     # convert multivariable function into single variable function
@@ -275,20 +280,18 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
     while(True):
 
         # step 4
-        part_1_s = -gradiantOfFunction(objectiveFunction, x_series[-1])
+        part_1_s = -gradiantOfFunction(objectiveFunction, x_series[k])
         p = (np.linalg.norm(-part_1_s))**2
-        q = gradiantOfFunction(objectiveFunction, x_series[-2])
+        q = gradiantOfFunction(objectiveFunction, x_series[k-1])
         r = (np.linalg.norm(q))**2
-        t = 0
-        if p != 0 and r != 0:
-            t = p/r
-        part_2_s = np.multiply(s_series[-1], t)
+        t = p/r
+        part_2_s = np.multiply(s_series[k-1], t)
         s = part_1_s + part_2_s
-        s_series.append(s)
+        s_series.append(s)  # s_series size will become to k+1
 
         # code to check linear independance
-        s_k = s_series[-1][:, 0]  # row vector
-        s_k_1 = s_series[-2][:, 0]  # row vector
+        s_k = s_series[k][:, 0]  # row vector
+        s_k_1 = s_series[k-1][:, 0]  # row vector
         dotProduct = s_k @ s_k_1
         factor = np.linalg.norm(s_k)*np.linalg.norm(s_k_1)
         finalDotProduct = dotProduct/factor
@@ -298,13 +301,13 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
         # print(dependencyCheck)
         if abs(dependencyCheck) < angleForDependencyInDegree:
             # Restart
-            print("Linear Dependency Found! Restarting")
-            return conjugateGradiantMethod(functionToOperate, limits, x_series[-1])
+            print(f"Linear Dependency Found! Restarting with {x_series[k]}")
+            return conjugateGradiantMethod(functionToOperate, limits, x_series[k])
 
         # step 5
         # convert multivariable function into single variable function
-        x_k = x_series[-1]  # 1-D list
-        s_k = s_series[-1][:, 0]  # 1-D list
+        x_k = x_series[k]  # 1-D list
+        s_k = s_series[k][:, 0]  # 1-D list
         newObjectiveFunction = changeToUniDirectionFunction(
             functionToOperate, x_k, s_k)
 
@@ -313,22 +316,24 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
         m, n = intervalHalving(newObjectiveFunction, epsinolOne, m, n)
         optimumPoint = (m+n)/2
         x_new = (np.array(x_k)+np.multiply(s_k, optimumPoint))
-        x_series.append(x_new)
+        x_series.append(x_new)  # x_series size will be k+2
 
         # step 6
         # check the terminate condition
-        norm_1 = np.linalg.norm(np.array(x_series[-1])-np.array(x_series[-2]))
-        norm_2 = np.linalg.norm(x_series[-2])
-        factor_1 = 0
-        factor_2 = np.linalg.norm(gradiantOfFunction(
+        norm_1 = np.linalg.norm(np.array(x_series[k+1])-np.array(x_series[k]))
+        norm_2 = np.linalg.norm(x_series[k])
+        factor = np.linalg.norm(gradiantOfFunction(
             functionToOperate, x_series[k+1]))
 
-        if norm_1 != 0 and norm_2 != 0:
-            factor_1 = norm_1/norm_2
+        if norm_2 != 0:
+            if norm_1/norm_2 <= epsinolThree:
+                print(f"CG: Termination Point 2. Iterations Count - {k}")
+                return x_series[k+1]
 
-        if factor_1 <= epsinolThree or factor_2 <= epsinolThree or k+1 >= M:
+        if factor <= epsinolThree or k+1 >= M:
             # terminate the function
-            return(x_series[-1])
+            print(f"CG: Termination Point 3. Iterations Count - {k}")
+            return x_series[k+1]
         else:
             k += 1
             continue
@@ -353,10 +358,8 @@ def start():
         f"\nOptimal value of the function is \n{objectiveFunction(*optimumPoint)}\n")
 
 
-""" 
-# For Consitency Check
-objectiveFunctionIndicator = 2
+""" objectiveFunctionIndicator = 2
 for i in range(10):
-    print(conjugateGradiantMethod(objectiveFunction,[-10,10],[1,1,1,1])) """
-    
+    print(conjugateGradiantMethod(objectiveFunction, [-10, 10], [8, 8, 8, 8]))
+ """
 start()
