@@ -1,216 +1,129 @@
-import matplotlib.pyplot as plt
+import numpy as np
 import math
 import random
-import numpy as np
 
-# Global Variables and Data Structures
-objectiveFunctionIndicator = 1 #default value
-uptoDecimalPlaces = 3    # Number used in unidirectional search to define upto how many digits we want after decimal, for epsinol = 10**-4 its limited to 4-1 = 3
-epsinol = 10**-4
-epsilon1 = 10**-3
-epsilon2 = 10**-3
-epsilon3 = 10**-3
-M=100                        # Max iterations in conjugate gradient method
-deltaX = 10**-5
-index = 0
-grad = 0.0
-noOfVariables = 2
-delta = None
-noOf_functionEval = None
-intermediatepoints =100
-queueSize = 5
-myQ_1 = None  # Queue
-xi = np.zeros(noOfVariables)
-si = np.zeros(noOfVariables)
-
-out = open(r"Phase_1_iterations.out", "w")
-
-# Bounding Phase Method varibales for ploting
-x_series = []
-f_x_series = []
-x_1_series = []
-f_x_1_series = []
-x_2_series = []
-f_x_2_series = []
-
-# Interval Halving Method Variables for ploting
-x_m_series = []
-f_x_m_series = []
-
-# Let make a Queue(data structure) which will store the recent x values and corresponding function values
-# we will only store limited values at this point
+objectiveFunctionIndicator = 1  # default value
+dictForObjectiveFunction = {}
+noOfFunctionEvaluations = 0
+angleForDependencyInDegree = 1  # For Linear Dependancy Check
 
 
-class CustomQueue:
-    global queueSize
+def objectiveFunction(*args):
+    """This will provide the objective function values.
+    Returns:
+        number: Function values 
+    """
+    global objectiveFunctionIndicator, dictForObjectiveFunction, noOfFunctionEvaluations
 
-    def __init__(self) -> None:
-        self.x_values = []
-        self.function_values = []
+    # check whether values are already stored or not.
+    if args in dictForObjectiveFunction:
+        return dictForObjectiveFunction.get(args)
 
-    def push_x_and_f_value(self, x, f):
-        # x is the point and f=function(x)
-        self.x_values.append(x)
-        self.function_values.append(f)
+    # when values are not stored calculate fresh.
+    result = 0
+    # Sum Squares Function
+    if objectiveFunctionIndicator == 1:
+        sum = 0
+        for i in range(len(args)):
+            sum = sum + (i+1)*(args[i])**2
+        result = sum
 
-        # now pope the first item from both the que
-        if(len(self.x_values) > queueSize):
-            self.x_values.pop(0)
-            self.function_values.pop(0)
-        else:
-            pass
+    # Rosenbrock Function
+    elif objectiveFunctionIndicator == 2:
+        sum = 0
+        for i in range(len(args)-1):
+            sum = sum + (100*(args[i+1]-args[i]**2)**2+(args[i]-1)**2)
+        result = sum
 
-class CustomList:
-    global queueSize
+    # Dixon-Price Function
+    elif objectiveFunctionIndicator == 3:
+        term_1 = (args[0]-1)**2
+        sum = 0
+        if len(args) > 1:
+            for i in range(len(args)-1):
+                sum = sum + (i+2)*(2*args[i+1]**2-args[i])**2
+        result = term_1+sum
 
-    def __init__(self) -> None:
-        self.index =[]
-        self.x_values = []
-        self.function_values = []
+    # Trid Function
+    elif objectiveFunctionIndicator == 4:
+        sum_1 = sum_2 = 0
+        for i in range(len(args)):
+            sum_1 = sum_1 + (args[i]-1)**2
+        for i in range(len(args)-1):
+            sum_2 = sum_2 + args[i+1]*args[i]
+        result = sum_1-sum_2
 
-    def push_x_and_f_value(self, x, f):
-        global index
-        # x is the point and f=function(x)
-        self.index.append(index)
-        self.x_values.append(x)
-        self.function_values.append(f)
-        index = index + 1
+    # Zakharov Function
+    elif objectiveFunctionIndicator == 5:
+        sum_1 = sum_2 = sum_3 = 0
+        for i in range(len(args)):
+            sum_1 = sum_1 + args[i]**2
+            sum_2 = sum_2 + 0.5*(i+1)*args[i]
+        sum_3 = sum_2
+        result = sum_1 + sum_2**2 + sum_3**4
 
-# Initiate the Optimization Method Here
-def start():
-    # take input from the user and run the methods
-    global out, noOf_functionEval, myQ_1, objectiveFunctionIndicator, delta
+    else:
+        return None
 
-    # set no of function evaluation = 0
-    noOf_functionEval = 0
-
-    # reinitialise the queue
-    myQ_1 = CustomQueue()
-    
-    objectiveFunctionIndicator = float(input("Input the serial number of desired objective function\t->\t"))
-    # lowerLimit = float(input("Please enter the lower limit\t->\t"))
-    # upperLimit = float(input("Please enter the upper limit\t->\t"))
-    lowerLimit = -10.0
-    upperLimit = 10.0
-    
-    
-    # intermediatepoints = float(input("Please enter the number of intermediate points\t->\t"))
-    print(conjugateGradientMethod(lowerLimit, upperLimit))
-
-    # print(f"Bounding Phase Method -> {a} to {b}")
-    # print(
-    #     f"No of function evaluations at the end of Bracketing Method = {noOf_functionEval}")
-
-    # print(f"Interval Halving Method -> {a} to {b}")
-    # print(f"Total no of function evaluations = {noOf_functionEval}")
-
-def gradientV(x):                              # A seperate function for gradient calculation of a function, input is a vector, output is a vector
-    global grad, deltaX
-    gradF = np.zeros(noOfVariables)
-    gradF =x
-    # print(grad)
-    grad = 1
-    # print(0)
-    # print(x)
-    # print(x+deltaX)
-    # gradF = (objectiveFunction(x+deltaX) -objectiveFunction(x-deltaX))/2*deltaX
-    grad = 0.0
-    # print(gradF)
-    # print(1123)
-    return  gradF           
-
-def magnitudeOfVector(x):                   # Function to calculate magnitude of a vector
-    value = 0
-    for i in range(noOfVariables):
-        value = value + x[0,i]**2
-    value = value**0.5
-    return value
-
-def conjugateGradientMethod(a, b):
-    global xi, si, index
-    k=0
-    xStart = (b-a)*np.random.rand(1, noOfVariables) +a*np.ones(noOfVariables)           # A random vector x to start with between a and b limits, b is upperLimit an a is lowerLimit
-    
-    gradF = gradientV(xStart)
-    # print(0000000)
-    # list = np.empty([2, M])                                       # Storing x vector in 0th row and its gradient vector in 1st row
-    # list[0,k] = xStart
-    # list[1,k] = gradF
-
-    list = CustomList()
-    list.push_x_and_f_value(xStart, gradF)
-
-    xi = xStart
-    si = -gradF
-
-    lmbda = unidirectionalSearch(a, b)                                                 # lmbda = lambda, output of unidirectional method will be lambda
-    xStart = xi + lmbda*si
-    k=1
-    gradF = gradientV(xStart)
-
-    # list[0,k] = xStart
-    # list[1,k] = gradF
-    list.push_x_and_f_value(xStart, gradF)
-    # print(index)
-    # print(11111111111111111111)
-    while True:
-        if(k-1 in list.index):
-            ind = list.index.index(k-1)
-            val = list.function_values[ind]
-        sk = -gradF + (magnitudeOfVector(gradF)**2/magnitudeOfVector(val)**2)*si
-
-        #Linear independence check
-        cosine = (si*sk)/(magnitudeOfVector(si)*magnitudeOfVector(sk))
-        # if(cosine>=0.99):
-        #     pass
+    # store the new calculated value in the dictionary
+    dictForObjectiveFunction[args] = result
+    noOfFunctionEvaluations += 1
+    return result
 
 
-        xi = xStart
-        si = sk
-
-        lmbda = unidirectionalSearch(a,b)
-
-        xStart = xi + lmbda*si
-        gradF = gradientV(xStart)
-
-        # list[0,k] = xStart
-        # list[1,k] = gradF
-        list.push_x_and_f_value(xStart, gradF)
-
-        if(magnitudeOfVector(xStart-xi)/magnitudeOfVector(xi)<=epsilon2):
-            break
-
-        if(magnitudeOfVector(gradF)<=epsilon3):
-            break
-
-
-
-    return xStart
+def partialDerivative(functionToOperate, variableIndicator, currentPoint):
+    """
+    This function will partially derive the a function 
+    with respect to variabel at a given point.
+    It uses central difference method to implement the partial derivatives of first order.
+    Args:
+        functionToOperate (call back function): [function on which we will be differentiating]
+        variableIndicator (int): [its an indicator for variable, starts from 1, with respect to which we will be partially differentiating]
+        currentPoint (list): [current point at which we need to make the differentiation]
+    Returns:
+        [number]: [value]
+    """
+    deltaX = 10**-4
+    pointOne = currentPoint.copy()
+    pointTwo = currentPoint.copy()
+    indicatorValue = currentPoint[variableIndicator-1]
+    pointOne[variableIndicator-1] = indicatorValue + deltaX
+    pointTwo[variableIndicator-1] = indicatorValue - deltaX
+    return (functionToOperate(*pointOne)-functionToOperate(*pointTwo))/(2*deltaX)
 
 
-def unidirectionalSearch(a,b): # Returns a number that matches optimum point upto decimal places defines by "uptoDecimalPlaces"
-    global delta
-    myQ_1 = CustomQueue()
-    delta = (b-a)/intermediatepoints                  #a= lowerlimit, b = upperlimit
-    [a, b] = boundingPhaseMethod(a, b)
+def gradiantOfFunction(functionToOperate, currentPoint):
+    """Generate gradiant of a vector at a particular point
+    Args:
+        functionToOperate (call back function): function on which gradiant to be operate on.
+        currentPoint (list): current point at which gradiant to be calculated.
+    Returns:
+        numpy array: gradiant vector
+    """
 
-    myQ_1 = CustomQueue()
-    out.write("\n\n")
-    [a, b] = intervalHalving(a, b)
+    # Create a Zero matrix with no. of rows = no of variable in currentpoint
+    # and only one column
+    A = np.zeros((len(currentPoint), 1))
+    for i in range(len(currentPoint)):
+        A[i][0] = partialDerivative(functionToOperate, i+1, currentPoint)
 
-    step = 10.0**uptoDecimalPlaces
-    return math.trunc(step*a)/step
+    return A
 
-# Bracketing Method
-def boundingPhaseMethod(a, b):
-    global out, x_series, f_x_series
 
-    # Write in the output File
-    out.write("Bounding Phase Method - Results\n")
-    out.write("#Iteration\tx\tf(x)\n")
+def boundingPhaseMethod(functionToOperate, delta, a, b):
+    """This is a Bracketing method. 
+    Which will be used to optimize a single variable function.
+    Args:
+        functionToOperate (call back function): Objective Function
+        delta (float): Separation between two points
+        a (float): Lower limit
+        b (float): Upper limit
+    Returns:
+        [a,b]: List containing the brackets [Lower,Upper].
+    """
 
-    k = 0
     deltaWithSign = None
+    k = 0
     while True:
         # step 1
         x_0 = random.uniform(a, b)
@@ -218,36 +131,20 @@ def boundingPhaseMethod(a, b):
             continue
 
         # step 2
-
         # In the below code there will be 3 function evaluations
-        if objectiveFunction(x_0 - abs(delta)) >= objectiveFunction(x_0) and objectiveFunction(x_0 + abs(delta)) <= objectiveFunction(x_0):
+        if functionToOperate(x_0 - abs(delta)) >= functionToOperate(x_0) and functionToOperate(x_0 + abs(delta)) <= functionToOperate(x_0):
             deltaWithSign = + abs(delta)
-        elif objectiveFunction(x_0 - abs(delta)) <= objectiveFunction(x_0) and objectiveFunction(x_0 + abs(delta)) >= objectiveFunction(x_0):
+        elif functionToOperate(x_0 - abs(delta)) <= functionToOperate(x_0) and functionToOperate(x_0 + abs(delta)) >= functionToOperate(x_0):
             deltaWithSign = - abs(delta)
         else:
             continue
 
-        # Write the initial value of x and f(x)
-        out.write("{}\t{}\t{}\n".format(k, x_0, objectiveFunction(x_0)))
-
-        # Fill the data in the List for ploting
-        x_series.append(x_0)
-        f_x_series.append(objectiveFunction(x_0))
-
         while True:
             # step 3
             x_new = x_0 + 2**k*deltaWithSign
-
-            if objectiveFunction(x_new) < objectiveFunction(x_0):
+            if functionToOperate(x_new) < functionToOperate(x_0):
                 k += 1
                 x_0 = x_new
-                # write the new value of x and f(x)
-                out.write("{}\t{}\t{}\n".format(
-                    k, x_new, objectiveFunction(x_new)))
-
-                # Fill the data in the List for ploting
-                x_series.append(x_new)
-                f_x_series.append(objectiveFunction(x_new))
                 continue
             else:
                 # return in [x_lower,x_upper] format
@@ -264,46 +161,35 @@ def boundingPhaseMethod(a, b):
     '''
 
 
-# Bounding Phase method
-def intervalHalving(a, b):
-    global x_1_series, x_m_series, x_2_series, f_x_1_series, f_x_m_series, f_x_2_series
+def intervalHalving(functionToOperate, epsinol, a, b):
+    """This is a Region Elimination method.
+    Which will be used to find the optimal solution for a single variable function.
+    Args:
+        functionToOperate (call back function): Objective Function
+        epsinol (float): Very small value used to terminate the iteration
+        a (float): Lower limit
+        b (float): Upper limit
+    Returns:
+        List: A list contains the bracket [lower,upper]
+    """
 
     # step 1
     x_m = (a+b)/2
     l = b-a
     no_of_iteration = 1
-
-    # Write in the output File
-    out.write("Interval Halving Method - Results\n")
-    out.write(
-        "#Iteration\tx_1\tx_m\tx_2\tf(x_1)\tf(x_m)\tf(x_2)\n")
-
     while True:
         # step2
         x_1 = a+l/4
         x_2 = b-l/4
-
-        # Write to the output file
-        out.write("{}\t{}\t{}\t{}\t{}\t{}\t{}\n".format(
-            no_of_iteration, x_1, x_m, x_2, objectiveFunction(x_1), objectiveFunction(x_m), objectiveFunction(x_2)))
-
-        # Fill the data in the store as well
-        x_m_series.append(x_m)
-        f_x_m_series.append(objectiveFunction(x_m))
-        x_1_series.append(x_1)
-        f_x_1_series.append(objectiveFunction(x_1))
-        x_2_series.append(x_2)
-        f_x_2_series.append(objectiveFunction(x_2))
-
         while True:
             # step3
-            if objectiveFunction(x_1) < objectiveFunction(x_m):
+            if functionToOperate(x_1) < functionToOperate(x_m):
                 b = x_m
                 x_m = x_1
                 break
 
             # step4
-            if objectiveFunction(x_2) < objectiveFunction(x_m):
+            if functionToOperate(x_2) < functionToOperate(x_m):
                 a = x_m
                 x_m = x_2
                 break
@@ -322,54 +208,152 @@ def intervalHalving(a, b):
             continue
 
 
-# Objective functions' definition
-def objectiveFunction(x):   # x is a scalar
-    # check whther the x is already stored in the queue
-    global noOf_functionEval, grad, xi, si
-    # print(11111)
-    # print(x)
-    if(grad == 1.0):
-        # print(22222)
-        return objectiveFunctionPhase2(x)
+def changeToUniDirectionFunction(functionToOperate, x, s):
+    """This is a function which will be used to scale the multivariable function
+    into a single variable function using uni direction method.
+    Args:
+        functionToOperate (call back function): Multivariable objective function
+        x (row vector): Position of initial point in [1,2,...] format
+        s (row vector): Direction vector in [1,2,....] format
+    Returns:
+        function: Scaled functiion in terms of single variable -> a
+    """
+    return lambda a: functionToOperate(*(np.array(x)+np.multiply(s, a)))
 
-    if (x in myQ_1.x_values):
-        index = myQ_1.x_values.index(x)
-        value = myQ_1.function_values[myQ_1.x_values.index(x)]
-        
-        # While dealing with Queue,
-        # there might be a chance of one value remaining fixed (let say x_m) in corresponding itaraions.
-        # Hence if you keep pushing other new value (let say x_1), it will soon eats up all the queue size
-        # and you have to loose the the fixed value (in this case x_m).
-        # So let update the the value as a last item if it appears again.
 
-        if(index == 0):
-            # When we are about to loose the value swap the value at the end again of the queue.
-            myQ_1.x_values.pop(0)
-            myQ_1.x_values.append(x)
-            myQ_1.function_values.pop(0)
-            myQ_1.function_values.append(value)
+def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
+    """This is an Gradiant Based Multi-Variable Optimisation Method.
+    It is used to find the optimal solution of an objective function.
+    Args:
+        functionToOperate (call back function): Objective Function
+        limits (list): in [lower,upper] format
+        initialPoint (list): in [x0,x1,x2....] format
+    """
+    # step 1
+    a, b = limits
+    x_0 = list(initialPoint)
+    epsinolOne = 10**-8
+    epsinolTwo = 10**-3
+    epsinolThree = 10**-8
+    k = 0
+    M = 1000
+    x_series = []  # store the x vextors
+    x_series.append(x_0)
 
-        return value
-    # print(131231123)
-    # print(xi)
-    # print(si)
-    value = objectiveFunctionPhase2(xi+x*si)
+    # step2
+    s_series = []  # store the direction vectors
+    gradiantAtX_0 = gradiantOfFunction(functionToOperate, x_0)
+    s_series.append(-gradiantAtX_0)
+    #print(x_series[-1],gradiantAtX_0)
+    # Extra termination condition *****
+    if (np.linalg.norm(gradiantAtX_0)) <= epsinolTwo:
+        print(f"CG: Termination Point 1. Iterations Count -> {k}")
+        return (x_0)
 
-    myQ_1.push_x_and_f_value(x, value)
-    return value
+    # step3
+    # convert multivariable function into single variable function
+    s_0 = s_series[0][:, 0]
+    newObjectiveFunction = changeToUniDirectionFunction(
+        functionToOperate, x_0, s_0)
 
-def objectiveFunctionPhase2(x): # input is a vector, output is a scalar value
-    f = 0
-    # print(123)
-    # print(x)
-    if(objectiveFunctionIndicator == 1):
-        for i in range(noOfVariables):
-            f = f + (i+1)*x[0,i]**2
-    elif(objectiveFunctionIndicator == 2):
-        for i in range(noOfVariables-1):
-            f = f + 100*(x[0,i+1]-x[0,i]**2)**2 + (x[0,i]-1)**2        
+    # search for unidirection optimal point
+    m, n = boundingPhaseMethod(newObjectiveFunction, 10**-1, a, b)
+    m, n = intervalHalving(newObjectiveFunction, epsinolOne, m, n)
+    optimumPoint = (m+n)/2
+    # print("Optimum Point",optimumPoint)
 
-    return f
+    x_1 = (np.array(x_0)+np.multiply(s_0, optimumPoint))
+    # print(x_1)
+    x_series.append(x_1)
+    k = 1
 
-# Run the code from here.
+    while(True):
+
+        # step 4
+        part_1_s = -gradiantOfFunction(objectiveFunction, x_series[k])
+        p = (np.linalg.norm(-part_1_s))**2
+        q = gradiantOfFunction(objectiveFunction, x_series[k-1])
+        r = (np.linalg.norm(q))**2
+        t = p/r
+        part_2_s = np.multiply(s_series[k-1], t)
+        s = part_1_s + part_2_s
+        s_series.append(s)  # s_series size will become to k+1
+
+        # code to check linear independance
+        s_k = s_series[k][:, 0]  # row vector
+        s_k_1 = s_series[k-1][:, 0]  # row vector
+        dotProduct = s_k @ s_k_1
+        factor = np.linalg.norm(s_k)*np.linalg.norm(s_k_1)
+        finalDotProduct = dotProduct/factor
+        finalDotProduct = round(finalDotProduct, 3)
+        dependencyCheck = math.acos(
+            finalDotProduct)*(180/math.pi)  # in degrees
+        # print(dependencyCheck)
+        if abs(dependencyCheck) < angleForDependencyInDegree:
+            # Restart
+            print(f"Linear Dependency Found! Restarting with {x_series[k]}")
+            return conjugateGradiantMethod(functionToOperate, limits, x_series[k])
+
+        # step 5
+        # convert multivariable function into single variable function
+        x_k = x_series[k]  # 1-D list
+        s_k = s_series[k][:, 0]  # 1-D list
+        newObjectiveFunction = changeToUniDirectionFunction(
+            functionToOperate, x_k, s_k)
+
+        # search for unidirection optimal point
+        m, n = boundingPhaseMethod(newObjectiveFunction, 10**-1, a, b)
+        m, n = intervalHalving(newObjectiveFunction, epsinolOne, m, n)
+        optimumPoint = (m+n)/2
+        x_new = (np.array(x_k)+np.multiply(s_k, optimumPoint))
+        x_series.append(x_new)  # x_series size will be k+2
+
+        # step 6
+        # check the terminate condition
+        norm_1 = np.linalg.norm(np.array(x_series[k+1])-np.array(x_series[k]))
+        norm_2 = np.linalg.norm(x_series[k])
+        factor = np.linalg.norm(gradiantOfFunction(
+            functionToOperate, x_series[k+1]))
+
+        if norm_2 != 0:
+            if norm_1/norm_2 <= epsinolThree:
+                print(f"CG: Termination Point 2. Iterations Count -> {k}")
+                return x_series[k+1]
+
+        if factor <= epsinolTwo or k+1 >= M:
+            # terminate the function
+            print(f"CG: Termination Point 3. Iterations Count -> {k}")
+            return x_series[k+1]
+        else:
+            k += 1
+            continue
+
+        break
+
+
+def start():
+    """Function to initialise the program
+    """
+    global objectiveFunctionIndicator
+    objectiveFunctionIndicator = int(input("Enter function indicator : \t"))
+    a = float(input("Enter the lower limit : \t"))
+    b = float(input("Enter the upper limit : \t"))
+    noOfVariables = int(input("Enter the number of variables : \t"))
+    initialChoice = []
+    for i in range(noOfVariables):
+        initialChoice.append((a+b)*random.random()+a)
+    optimumPoint = conjugateGradiantMethod(
+        objectiveFunction, [a, b], initialChoice)
+    print(
+        f"\nTotal no of function evaluations are \n{noOfFunctionEvaluations}\n")
+    print(
+        f"\nOptimal solutions for the current objective function and for the given range is \n{optimumPoint}\n")
+    print(
+        f"\nOptimal value of the function is \n{objectiveFunction(*optimumPoint)}\n")
+
+
+""" objectiveFunctionIndicator = 3
+for i in range(10):
+    print(conjugateGradiantMethod(objectiveFunction, [-10, 10], [-8, -8, -8, -8])) """
+
 start()
