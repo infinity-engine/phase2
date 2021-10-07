@@ -245,9 +245,10 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
     a, b = limits
     x_0 = list(initialPoint)
     epsinolOne = 10**-8
+    epsinolTwo = 10**-3
     epsinolThree = 10**-8
     k = 0
-    M = 100
+    M = 1000
     x_series = []  # store the x vextors
     x_series.append(x_0)
 
@@ -255,9 +256,10 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
     s_series = []  # store the direction vectors
     gradiantAtX_0 = gradiantOfFunction(functionToOperate, x_0)
     s_series.append(-gradiantAtX_0)
+    #print(x_series[-1],gradiantAtX_0)
     # Extra termination condition *****
-    if (np.linalg.norm(gradiantAtX_0)) <= epsinolThree:
-        print(f"CG: Termination Point 1. Iterations Count - {k}")
+    if (np.linalg.norm(gradiantAtX_0)) <= epsinolTwo:
+        print(f"CG: Termination Point 1. Iterations Count -> {k}")
         return (x_0)
 
     # step3
@@ -327,12 +329,12 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
 
         if norm_2 != 0:
             if norm_1/norm_2 <= epsinolThree:
-                print(f"CG: Termination Point 2. Iterations Count - {k}")
+                print(f"CG: Termination Point 2. Iterations Count -> {k}")
                 return x_series[k+1]
 
-        if factor <= epsinolThree or k+1 >= M:
+        if factor <= epsinolTwo or k+1 >= M:
             # terminate the function
-            print(f"CG: Termination Point 3. Iterations Count - {k}")
+            print(f"CG: Termination Point 3. Iterations Count -> {k}")
             return x_series[k+1]
         else:
             k += 1
@@ -358,8 +360,8 @@ def start():
         f"\nOptimal value of the function is \n{objectiveFunction(*optimumPoint)}\n")
 
 
-""" objectiveFunctionIndicator = 2
+""" objectiveFunctionIndicator = 3
 for i in range(10):
-    print(conjugateGradiantMethod(objectiveFunction, [-10, 10], [8, 8, 8, 8]))
- """
+    print(conjugateGradiantMethod(objectiveFunction, [-10, 10], [-8, -8, -8, -8])) """
+
 start()
