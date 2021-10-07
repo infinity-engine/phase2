@@ -352,9 +352,14 @@ def start():
     objectiveFunctionIndicator = int(input("Enter function indicator : \t"))
     a = float(input("Enter the lower limit : \t"))
     b = float(input("Enter the upper limit : \t"))
+    noOfVariables = int(input("Enter the number of variables : \t"))
+    initialChoice = []
+    for i in range(noOfVariables):
+        initialChoice.append(random.uniform(a,b))
+    print(f"\nInitial Point : \n{initialChoice}")
     print("\n")
     optimumPoint = conjugateGradiantMethod(
-        objectiveFunction, [a, b], [8, 8, 8, 8])
+        objectiveFunction, [a, b], initialChoice)
     print(
         f"\nTotal no of function evaluations are \n{noOfFunctionEvaluations}\n")
     print(
