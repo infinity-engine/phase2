@@ -1,12 +1,13 @@
 import numpy as np
 import math
 import random
+import matplotlib.pyplot as plt
 
 objectiveFunctionIndicator = 1  # default value
 dictForObjectiveFunction = {}
 noOfFunctionEvaluations = 0
 angleForDependencyInDegree = 1  # For Linear Dependancy Check
-
+x_series = [] # Just for ploting, should not be used in other program
 
 def objectiveFunction(*args):
     """This will provide the objective function values.
@@ -241,6 +242,7 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
         limits (list): in [lower,upper] format
         initialPoint (list): in [x0,x1,x2....] format
     """
+    global x_series
     # step 1
     a, b = limits
     x_0 = list(initialPoint)
@@ -348,17 +350,25 @@ def start():
     """
     global objectiveFunctionIndicator
     objectiveFunctionIndicator = int(input("Enter function indicator : \t"))
-    a = int(input("Enter the lower limit : \t"))
-    b = int(input("Enter the upper limit : \t"))
+    a = float(input("Enter the lower limit : \t"))
+    b = float(input("Enter the upper limit : \t"))
+    print("\n")
     optimumPoint = conjugateGradiantMethod(
-        objectiveFunction, [a, b], [1, 1, 1, 1])
+        objectiveFunction, [a, b], [8, 8, 8, 8])
     print(
         f"\nTotal no of function evaluations are \n{noOfFunctionEvaluations}\n")
     print(
-        f"\nOptimal solutions for the current objective function and for the given range is \n{optimumPoint}\n")
+        f"\nOptimal solutions for the current objective function, for the given range, is \n{optimumPoint}\n")
     print(
         f"\nOptimal value of the function is \n{objectiveFunction(*optimumPoint)}\n")
-
+    
+    #For ploting
+    x_axis = range(len(x_series))
+    y_axis = []
+    for x in x_series:
+        y_axis.append(objectiveFunction(*x))
+    plt.plot(x_axis,y_axis)
+    plt.show()
 
 """ objectiveFunctionIndicator = 3
 for i in range(10):
