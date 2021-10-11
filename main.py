@@ -14,7 +14,7 @@ def objectiveFunction(*args):
     """This will provide the objective function values.
 
     Returns:
-        number: Function values 
+        number: Function values
     """
     global objectiveFunctionIndicator, dictForObjectiveFunction, noOfFunctionEvaluations
 
@@ -76,7 +76,7 @@ def objectiveFunction(*args):
 
 def partialDerivative(functionToOperate, variableIndicator, currentPoint):
     """
-    This function will partially derive the a function 
+    This function will partially derive the a function
     with respect to variabel at a given point.
     It uses central difference method to implement the partial derivatives of first order.
 
@@ -118,7 +118,7 @@ def gradiantOfFunction(functionToOperate, currentPoint):
 
 
 def boundingPhaseMethod(functionToOperate, delta, a, b):
-    """This is a Bracketing method. 
+    """This is a Bracketing method.
     Which will be used to optimize a single variable function.
 
     Args:
@@ -249,7 +249,7 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
     x_0 = list(initialPoint)
     epsinolOne = 10**-8
     epsinolTwo = 10**-3
-    epsinolThree = 10**-8
+    epsinolThree = 10**-3
     k = 0
     M = 1000
     x_series = []  # store the x vextors
@@ -347,9 +347,10 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
 
 
 def start():
-    """Function to initialise the program
-    """
+    #Function to initialise the program
+
     global objectiveFunctionIndicator
+    out = open(r"CG_iterations.out", "w")
     objectiveFunctionIndicator = int(input("Enter function indicator : \t"))
     a = float(input("Enter the lower limit : \t"))
     b = float(input("Enter the upper limit : \t"))
@@ -377,23 +378,30 @@ def start():
     plt.xlabel("Iteration Count")
     plt.ylabel("F(X)")
     plt.legend(["F(X)"])
+    for x in x_series:
+        out.write(f"{x}\t{objectiveFunction(*x)}")
+        out.write("\n")
     plt.show()
 
 
-""" objectiveFunctionIndicator = 3
-for i in range(10):
-    print(conjugateGradiantMethod(objectiveFunction, [-10, 10], [-8, -8, -8, -8])) """
+""" 
+objectiveFunctionIndicator = 3
+for i in range(1):
+    print(conjugateGradiantMethod(objectiveFunction, [-10, 10], [
+          9.274223534072267, 4.94298352297724, -6.49988330765493, -1.9615581061654161])) 
+"""
 
 start()
 
-""" 
-#For Observation
+
+""" # For Observation
 for i in range(5):
     objectiveFunctionIndicator = i+1
-    print("\n\n\n\nObjective Function\t",objectiveFunctionIndicator,"\n")
+    print("\n\n\n\nObjective Function\t", objectiveFunctionIndicator, "\n")
     for j in range(5):
         initialChoice = []
         for k in range(5):
-            initialChoice.append(random.uniform(-10,10))
-        print("Initial point\n",initialChoice)
-        print(conjugateGradiantMethod(objectiveFunction,[-10,10],initialChoice)) """
+            initialChoice.append(random.uniform(-10, 10))
+        print("Initial point\n", initialChoice)
+        print(conjugateGradiantMethod(objectiveFunction, [-10, 10], initialChoice))
+"""
