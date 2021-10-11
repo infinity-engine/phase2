@@ -7,7 +7,8 @@ objectiveFunctionIndicator = 1  # default value
 dictForObjectiveFunction = {}
 noOfFunctionEvaluations = 0
 angleForDependencyInDegree = 1  # For Linear Dependancy Check
-x_series = [] # Just for ploting, should not be used in other program
+x_series = []  # Just for ploting, should not be used in other program
+
 
 def objectiveFunction(*args):
     """This will provide the objective function values.
@@ -258,7 +259,7 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
     s_series = []  # store the direction vectors
     gradiantAtX_0 = gradiantOfFunction(functionToOperate, x_0)
     s_series.append(-gradiantAtX_0)
-    #print(x_series[-1],gradiantAtX_0)
+    # print(x_series[-1],gradiantAtX_0)
     # Extra termination condition *****
     if (np.linalg.norm(gradiantAtX_0)) <= epsinolTwo:
         print(f"CG: Termination Point 1. Iterations Count -> {k}")
@@ -355,7 +356,7 @@ def start():
     noOfVariables = int(input("Enter the number of variables : \t"))
     initialChoice = []
     for i in range(noOfVariables):
-        initialChoice.append(random.uniform(a,b))
+        initialChoice.append(random.uniform(a, b))
     print(f"\nInitial Point : \n{initialChoice}")
     print("\n")
     optimumPoint = conjugateGradiantMethod(
@@ -366,17 +367,33 @@ def start():
         f"\nOptimal solutions for the current objective function, for the given range, is \n{optimumPoint}\n")
     print(
         f"\nOptimal value of the function is \n{objectiveFunction(*optimumPoint)}\n")
-    
-    #For ploting
+
+    # For ploting
     x_axis = range(len(x_series))
     y_axis = []
     for x in x_series:
         y_axis.append(objectiveFunction(*x))
-    plt.plot(x_axis,y_axis)
+    plt.plot(x_axis, y_axis, "r*-")
+    plt.xlabel("Iteration Count")
+    plt.ylabel("F(X)")
+    plt.legend(["F(X)"])
     plt.show()
+
 
 """ objectiveFunctionIndicator = 3
 for i in range(10):
     print(conjugateGradiantMethod(objectiveFunction, [-10, 10], [-8, -8, -8, -8])) """
 
 start()
+
+""" 
+#For Observation
+for i in range(5):
+    objectiveFunctionIndicator = i+1
+    print("\n\n\n\nObjective Function\t",objectiveFunctionIndicator,"\n")
+    for j in range(5):
+        initialChoice = []
+        for k in range(5):
+            initialChoice.append(random.uniform(-10,10))
+        print("Initial point\n",initialChoice)
+        print(conjugateGradiantMethod(objectiveFunction,[-10,10],initialChoice)) """
