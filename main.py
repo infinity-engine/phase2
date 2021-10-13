@@ -248,7 +248,7 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
     a, b = limits
     x_0 = list(initialPoint)
     epsinolOne = 10**-8
-    epsinolTwo = 10**-3
+    epsinolTwo = 10**-8
     epsinolThree = 10**-3
     k = 0
     M = 1000
@@ -331,11 +331,11 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
             functionToOperate, x_series[k+1]))
 
         if norm_2 != 0:
-            if norm_1/norm_2 <= epsinolThree:
+            if norm_1/norm_2 <= epsinolTwo:
                 print(f"CG: Termination Point 2. Iterations Count -> {k}")
                 return x_series[k+1]
 
-        if factor <= epsinolTwo or k+1 >= M:
+        if factor <= epsinolThree or k+1 >= M:
             # terminate the function
             print(f"CG: Termination Point 3. Iterations Count -> {k}")
             return x_series[k+1]
@@ -403,5 +403,4 @@ for i in range(5):
         for k in range(5):
             initialChoice.append(random.uniform(-10, 10))
         print("Initial point\n", initialChoice)
-        print(conjugateGradiantMethod(objectiveFunction, [-10, 10], initialChoice))
-"""
+        print(conjugateGradiantMethod(objectiveFunction, [-10, 10], initialChoice)) """
