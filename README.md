@@ -1,2 +1,2 @@
 # phase2
-This is for Phase to of Optimization Project
+This is for the Phase 2 of the Optimization Project.
