@@ -170,7 +170,7 @@ def boundingPhaseMethod(functionToOperate, delta, a, b):
     '''
 
 
-def intervalHalving(functionToOperate, epsinol, a, b):
+def intervalHalvingMethod(functionToOperate, epsinol, a, b):
     """This is a Region Elimination method.
     Which will be used to find the optimal solution for a single variable function.
 
@@ -273,7 +273,7 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
 
     # search for unidirection optimal point
     m, n = boundingPhaseMethod(newObjectiveFunction, 10**-1, a, b)
-    m, n = intervalHalving(newObjectiveFunction, epsinolOne, m, n)
+    m, n = intervalHalvingMethod(newObjectiveFunction, epsinolOne, m, n)
     optimumPoint = (m+n)/2
     # print("Optimum Point",optimumPoint)
 
@@ -318,7 +318,7 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
 
         # search for unidirection optimal point
         m, n = boundingPhaseMethod(newObjectiveFunction, 10**-1, a, b)
-        m, n = intervalHalving(newObjectiveFunction, epsinolOne, m, n)
+        m, n = intervalHalvingMethod(newObjectiveFunction, epsinolOne, m, n)
         optimumPoint = (m+n)/2
         x_new = (np.array(x_k)+np.multiply(s_k, optimumPoint))
         x_series.append(x_new)  # x_series size will be k+2
