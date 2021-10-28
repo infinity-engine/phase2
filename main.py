@@ -261,7 +261,7 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
     s_series.append(-gradiantAtX_0)
     # print(x_series[-1],gradiantAtX_0)
     # Extra termination condition *****
-    if (np.linalg.norm(gradiantAtX_0)) <= epsinolTwo:
+    if (np.linalg.norm(gradiantAtX_0)) <= epsinolThree:
         print(f"CG: Termination Point 1. Iterations Count -> {k}")
         return (x_0)
 
@@ -337,7 +337,7 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
 
         if factor <= epsinolThree or k+1 >= M:
             # terminate the function
-            print(f"CG: Termination Point 3. Iterations Count -> {k}")
+            print(f"CG: Termination Point 3. Iterations Count -> {k+1}")
             return x_series[k+1]
         else:
             k += 1
