@@ -374,13 +374,12 @@ def start():
     y_axis = []
     for x in x_series:
         y_axis.append(objectiveFunction(*x))
+        out.write(f"{x}\t{objectiveFunction(*x)}")
+        out.write("\n")
     plt.plot(x_axis, y_axis, "r*-")
     plt.xlabel("Iteration Count")
     plt.ylabel("F(X)")
     plt.legend(["F(X)"])
-    for x in x_series:
-        out.write(f"{x}\t{objectiveFunction(*x)}")
-        out.write("\n")
     plt.show()
 
 
