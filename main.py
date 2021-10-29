@@ -285,9 +285,9 @@ def conjugateGradiantMethod(functionToOperate, limits, initialPoint):
     while(True):
 
         # step 4
-        part_1_s = -gradiantOfFunction(objectiveFunction, x_series[k])
+        part_1_s = -gradiantOfFunction(functionToOperate, x_series[k])
         p = (np.linalg.norm(-part_1_s))**2
-        q = gradiantOfFunction(objectiveFunction, x_series[k-1])
+        q = gradiantOfFunction(functionToOperate, x_series[k-1])
         r = (np.linalg.norm(q))**2
         t = p/r
         part_2_s = np.multiply(s_series[k-1], t)
